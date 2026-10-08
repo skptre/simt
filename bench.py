@@ -24,7 +24,7 @@ def time_ar1(n_runs, n_steps, device, dtype=torch.float32, repeats=5):
     times.sort()
     return times[len(times) // 2]
 
-def time_engine(scenario, n_runs, n_steps, device, reapts=5, chunk_size=1_000_000):
+def time_engine(scenario, n_runs, n_steps, device, repeats=5, chunk_size=1_000_000):
     run(scenario, n_runs, n_steps, device=device, chunk_size=chunk_size)
     times = sorted(run(scenario, n_runs, n_steps, device=device, chunk_size=chunk_size)[1] for _ in range(repeats))
     return times[len(times) // 2]
