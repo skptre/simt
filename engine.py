@@ -27,7 +27,7 @@ def run(scenario, n_runs, n_steps, seed=0, device="cpu", dtype=torch.float32, ch
     generator = torch.Generator(device=device).manual_seed(seed)
 
     chunks = []
-    start - time.perf_counter()
+    start = time.perf_counter()
 
     for first in range(0, n_runs, chunk_size):
         n = min(chunk_size, n_runs - first)
