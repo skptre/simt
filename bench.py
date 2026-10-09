@@ -61,11 +61,24 @@ def time_fn(fn, device, repeats=5):
 
 def particle_kernel_full(n_runs, n_steps, dt):
     from kernels import run_particle_kernel
-    g = torch.Generator(device=device).manual_seed(0)
+    g = torch.Generator(device="cuda").manual_seed(0)
     x0 = 0.5 * torch.randn(n_runs, generator=g, device="cuda")
     v = 1.0 + 0.1 * torch.randn(n_runs, generator=g, device="cuda")
     out = run_particle_kernel(x0, v, dt, n_steps)
     return {"v": v.cpu(), "x0": x0.cpu(), "final_x": out.cpu()}
+
+def bench_kf_kernel(n_steps=100):
+    from kernels import run_kf_kernel
+    rows = []
+
+    for dims in [1, 2, 3]:
+        sc = ConstantVelocity(dims=dims)
+        for n_runs in [1_000, 10_000, 100_000, 1_000_000]:
+            t_eng = time_engine(sc, n_runs, n_steps, "cuda")
+            t_ker = time_fn(lambda: run_kf_kernel(sc, n_runs, n_steps), "cuda")
+            rows.append({"D": sc.D, "n_runs": n_runs, "n_steps": n_steps, "engine_s": t_eng, "kernel_s": t_ker, "speedup": t_eng / t_ker})
+            print(f"D={sc.D}  N={n_runs:>9}  engine={t_eng*1000:9.1f} ms  kernel={t_ker*1000:8.1f} ms  speedup={t_eng/t_ker:6.1f}x")
+    return rows
 
 def save_csv(rows, path):
     with open(path, "w", newline="") as f:
@@ -96,11 +109,16 @@ if __name__ == "__main__":
         rows = bench_kf(device)
         save_csv(rows, f"bench_kf_{device}.csv")
     
-    if which in ("pkernel", "all"):
+    if which in ("pkernel", "all") and device == "cuda":
         print("---Particle: PyTorch engine vs fused kernel---")
         sc = Particle()
         for n_runs in [1, 100, 10_000, 1_000_000, 10_000_000]:
             t_eng = time_engine(sc, n_runs, 1000, device)
             t_ker = time_fn(lambda: particle_kernel_full(n_runs, 1000, sc.dt), device)
             print(f"N={n_runs:>10}  engine={t_eng*1000:8.1f} ms  kernel={t_ker*1000:8.1f} ms  speedup={t_eng/t_ker:6.1f}x")
+
+    if which in ("kfkernel", "all") and device == "cuda":
+        print("---Kalman filter: PyTorch engine vs fused kernel---")
+        rows = bench_kf_kernel()
+        save_csv(rows, "bench_kf_kernel.csv")
 
