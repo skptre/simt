@@ -2,10 +2,10 @@ import time
 import torch
 from noise import ar1
 from engine import run
-from particle import Particle
+from examples.particle import Particle
 import csv 
 import sys
-from cv import ConstantVelocity
+from examples.cv import ConstantVelocity
 
 
 def sync(device):
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     if which in ("kf", "all"):
         print("---Kalman filter (constant velocity)---")
         rows = bench_kf(device)
-        save_csv(rows, f"bench_kf_{device}.csv")
+        save_csv(rows, f"data/bench_kf_{device}.csv")
     
     if which in ("pkernel", "all") and device == "cuda":
         print("---Particle: PyTorch engine vs fused kernel---")
@@ -120,5 +120,5 @@ if __name__ == "__main__":
     if which in ("kfkernel", "all") and device == "cuda":
         print("---Kalman filter: PyTorch engine vs fused kernel---")
         rows = bench_kf_kernel()
-        save_csv(rows, "bench_kf_kernel.csv")
+        save_csv(rows, "data/bench_kf_kernel.csv")
 

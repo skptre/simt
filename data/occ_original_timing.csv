@@ -1,0 +1,11 @@
+code,hardware,config,alt_km,seed,seconds_per_run
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,300,2,3.597911099990597
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,300,3,3.729819000000134
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,300,4,3.644764099997701
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,300,5,3.6058861000055913
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,300,6,3.620160799997393
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,450,2,3.6940736999968067
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,450,3,3.5785813000111375
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,450,4,3.6093028000032064
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,450,5,3.6123070000030566
+original fusion_osse.py,"AMD64 Family 25 Model 80 Stepping 0, AuthenticAMD",fused_gauge_O_drag,450,6,3.6117876000062097

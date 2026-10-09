@@ -1,6 +1,6 @@
 import pytest
 import torch
-from cv import ConstantVelocity
+from examples.cv import ConstantVelocity
 from engine import run
 
 

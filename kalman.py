@@ -25,3 +25,11 @@ def kf_update(x, P, z, H, R):
     I = torch.eye(P.shape[-1], device=P.device, dtype=P.dtype)
     P = (I - K @ H) @ P
     return x, P
+
+def kf_update_scalar(x, P, H, z, h, r2):
+    PH = (P @ H.unsqueeze(-1)).squeeze(-1)
+    S = (H * PH).sum(1) + r2
+    K = PH / S[:, None]
+    x = x + K * (z - h)[:, None]
+    P = P - K[:, :, None] * PH[:, None, :]
+    return x, P

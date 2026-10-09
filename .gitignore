@@ -18,6 +18,7 @@ dist/
 
 # Simulation output / large data
 runs/
+cache/
 *.npz
 *.parquet
 

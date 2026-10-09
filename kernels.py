@@ -57,6 +57,17 @@ def chol_solve(S, B, X, m, ncols):
 
 
 _kf_cache = {}  # compiled kernels keyed by (dims, use64)
+_state_cache = {}  # pristine RNG states keyed by (n_runs, seed)
+
+
+def get_states(n_runs, seed):
+    key = (n_runs, seed)
+    if key not in _state_cache:
+        _state_cache[key] = create_xoroshiro128p_states(n_runs, seed=seed)
+    src = _state_cache[key]
+    states = cuda.device_array_like(src)  # fresh GPU buffer, same shape/type
+    states.copy_to_device(src)
+    return states
 
 
 def make_kf_kernel(dims, use64):
@@ -198,7 +209,7 @@ def run_kf_kernel(sc, n_runs, n_steps=100, seed=0, dtype=torch.float32, threads=
     u = torch.rand(n_runs, generator=g, device="cuda", dtype=dtype)  # uniform [0, 1) per run
     r = sc.r_min + (sc.r_max - sc.r_min) * u  # per-run sensor noise std
 
-    states = create_xoroshiro128p_states(n_runs, seed=seed)  # one random stream per thread
+    states = get_states(n_runs, seed)  # one random stream per thread (setup cached, fresh copy per call)
     pos_err = torch.empty(n_runs, device="cuda", dtype=dtype)  # output: final position error per run
     nees = torch.empty_like(pos_err)  # output: final NEES per run
 

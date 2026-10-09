@@ -1,7 +1,7 @@
 import pytest
 import torch
 from engine import run
-from cv import ConstantVelocity
+from examples.cv import ConstantVelocity
 
 @pytest.mark.parametrize("dims", [1, 2, 3])
 
