@@ -47,6 +47,26 @@ def bench_kf(device, n_steps=100):
             print(f"{device}  D={sc.D}  N={n_runs:>9}  {t*1000:9.1f} ms  {n_runs/t:14.0f} runs/s")
     return rows
 
+def time_fn(fn, device, repeats=5):
+    fn()
+    sync(device)
+    times = []
+    for _ in range(repeats):
+        start = time.perf_counter()
+        fn()
+        sync(device)
+        times.append(time.perf_counter() - start)
+    times.sort()
+    return times[len(times) // 2]
+
+def particle_kernel_full(n_runs, n_steps, dt):
+    from kernels import run_particle_kernel
+    g = torch.Generator(device=device).manual_seed(0)
+    x0 = 0.5 * torch.randn(n_runs, generator=g, device="cuda")
+    v = 1.0 + 0.1 * torch.randn(n_runs, generator=g, device="cuda")
+    out = run_particle_kernel(x0, v, dt, n_steps)
+    return {"v": v.cpu(), "x0": x0.cpu(), "final_x": out.cpu()}
+
 def save_csv(rows, path):
     with open(path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=rows[0].keys())
@@ -75,4 +95,12 @@ if __name__ == "__main__":
         print("---Kalman filter (constant velocity)---")
         rows = bench_kf(device)
         save_csv(rows, f"bench_kf_{device}.csv")
+    
+    if which in ("pkernel", "all"):
+        print("---Particle: PyTorch engine vs fused kernel---")
+        sc = Particle()
+        for n_runs in [1, 100, 10_000, 1_000_000, 10_000_000]:
+            t_eng = time_engine(sc, n_runs, 1000, device)
+            t_ker = time_fn(lambda: particle_kernel_full(n_runs, 1000, sc.dt), device)
+            print(f"N={n_runs:>10}  engine={t_eng*1000:8.1f} ms  kernel={t_ker*1000:8.1f} ms  speedup={t_eng/t_ker:6.1f}x")
 
