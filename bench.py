@@ -3,6 +3,10 @@ import torch
 from noise import ar1
 from engine import run
 from particle import Particle
+import csv 
+import sys
+from cv import ConstantVelocity
+
 
 def sync(device):
     if device == "cuda":
@@ -29,17 +33,46 @@ def time_engine(scenario, n_runs, n_steps, device, repeats=5, chunk_size=1_000_0
     times = sorted(run(scenario, n_runs, n_steps, device=device, chunk_size=chunk_size)[1] for _ in range(repeats))
     return times[len(times) // 2]
 
+def bench_kf(device, n_steps=100):
+    max_n = 1_000_000 if device == "cuda" else 100_000
+    rows = []
+
+    for dims in [1, 2, 3]:
+        sc = ConstantVelocity(dims=dims)
+        for n_runs in [1_000, 10_000, 100_000, 1_000_000]:
+            if n_runs > max_n:
+                continue
+            t = time_engine(sc, n_runs, n_steps, device)
+            rows.append({"device": device, "D": sc.D, "n_runs": n_runs, "n_steps": n_steps, "seconds": t, "run_per_s": n_runs / t})
+            print(f"{device}  D={sc.D}  N={n_runs:>9}  {t*1000:9.1f} ms  {n_runs/t:14.0f} runs/s")
+    return rows
+
+def save_csv(rows, path):
+    with open(path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=rows[0].keys())
+        writer.writeheader()
+        writer.writerows(rows)
+
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    print("---AR1---")
-    for n_runs in [1, 10, 100, 1_000, 10_000, 100_000]:
-        t = time_ar1(n_runs, 1000, device)
-        print(f"{device} N={n_runs:>8} {t*1000:8.1f} ms {n_runs/t:12.0f} runs/s")
+    which = sys.argv[1] if len(sys.argv) > 1 else "all"
+
+    if which in ("ar1", "all"):
+        print("---AR1---")
+        for n_runs in [1, 10, 100, 1_000, 10_000, 100_000]:
+            t = time_ar1(n_runs, 1000, device)
+            print(f"{device} N={n_runs:>10} {t*1000:8.1f} ms {n_runs/t:14.0f} runs/s")
     
-    print("---ENGINE: Particle---")
-    sc = Particle()
-    for n_runs in [1, 100, 10_000, 1_000_000, 10_000_000]:
-        t = time_engine(sc, n_runs, 1000, device)
-        print(f"{device}  N={n_runs:>10}  {t*1000:8.1f} ms  {n_runs/t:14.0f} runs/s")
+    if which in ("particle", "all"):
+        print("---ENGINE: Particle---")
+        sc = Particle()
+        for n_runs in [1, 100, 10_000, 1_000_000, 10_000_000]:
+            t = time_engine(sc, n_runs, 1000, device)
+            print(f"{device}  N={n_runs:>10}  {t*1000:8.1f} ms  {n_runs/t:14.0f} runs/s")
+
+    if which in ("kf", "all"):
+        print("---Kalman filter (constant velocity)---")
+        rows = bench_kf(device)
+        save_csv(rows, f"bench_kf_{device}.csv")
 
