@@ -3,3 +3,4 @@ torch
 pymsis
 matplotlib
 numba-cuda
+pytest
