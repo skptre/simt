@@ -2,3 +2,4 @@ numpy
 torch
 pymsis
 matplotlib
+numba-cuda
