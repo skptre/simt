@@ -11,7 +11,7 @@ cuda_only = pytest.mark.skipif(not torch.cuda.is_available(), reason="needs GPU"
 @pytest.mark.parametrize("dtype", [torch.float32, torch.float64])
 
 def test_kf_kernel_consistent(dims, dtype):
-    from kernels import make_kf_kernel
+    from kernels import run_kf_kernel
     sc = ConstantVelocity(dims=dims)
     out = run_kf_kernel(sc, n_runs=20_000, n_steps=50, dtype=dtype)
     assert abs(out["nees"].mean().item() - sc.D) / sc.D < 0.05
