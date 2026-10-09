@@ -15,10 +15,10 @@ class Particle(Scenario):
         x0 = self.x0_std * torch.randn(n_runs, generator=generator, device=device, dtype=dtype)
         return {"v": v, "x0": x0}
 
-    def init_state(self, params):
+    def init_state(self, params, generator):
         return params["x0"]
 
-    def step(self, state, k, params):
+    def step(self, state, k, params, generator):
         return state + params["v"] * self.dt
 
     def score(self, state, params):

@@ -8,12 +8,12 @@ class Scenario:
         # Kept separately because later the SURROGATE learns: settings -> outcome.
         raise NotImplementedError
 
-    def init_state(self, params):
+    def init_state(self, params, generator):
         # Starting state for every run. Returns starting state
         # Each run's start can depend on its own params (broadcasting).
         raise NotImplementedError
     
-    def step(self, state, k, params):
+    def step(self, state, k, params, generator):
         # Advance ALL runs by one timestep k. Returns new state, same shape.
         # This is the sequential part - the engine calls it in a loop over time.
         raise NotImplementedError
@@ -22,6 +22,7 @@ class Scenario:
         # After the last step: per-run outcome metrics, e.g. final error, success flag.
         # Returns dict {name: tensor [N]}.
         raise NotImplementedError
+
 
 def run(scenario, n_runs, n_steps, seed=0, device="cpu", dtype=torch.float32, chunk_size=100_000):
     generator = torch.Generator(device=device).manual_seed(seed)
@@ -33,10 +34,10 @@ def run(scenario, n_runs, n_steps, seed=0, device="cpu", dtype=torch.float32, ch
         n = min(chunk_size, n_runs - first)
 
         params = scenario.sample(n, generator, device, dtype)
-        state = scenario.init_state(params)
+        state = scenario.init_state(params, generator)
 
         for k in range(n_steps):
-            state = scenario.step(state, k, params)
+            state = scenario.step(state, k, params, generator)
         metrics = scenario.score(state, params)
         chunks.append({name: v.cpu() for name, v in {**params, **metrics}.items()})
 
