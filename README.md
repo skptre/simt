@@ -1,4 +1,4 @@
-# simt
+# SIMT
 
 **Simulate It a Million Times**
 
@@ -14,12 +14,14 @@ The runs don't depend on each other. So instead of looping over them one at a ti
 
 ## How it's organized
 
-| Part | What it does | Where |
-|---|---|---|
-| Engine | Runs any simulation many times at once on CPU or GPU, and keeps every run's random inputs next to its results | `engine.py` |
-| Building blocks | Smoothly varying random noise, Kalman filter updates for many runs at once | `noise.py`, `kalman.py` |
-| CUDA kernels | Hand-written GPU code that runs one entire simulation inside a single GPU thread | `kernels.py` |
-| Examples | A simple test case, the tracking filter benchmark, and the OSSE | `examples/` |
+
+| Part            | What it does                                                                                                  | Where                   |
+| --------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| Engine          | Runs any simulation many times at once on CPU or GPU, and keeps every run's random inputs next to its results | `engine.py`             |
+| Building blocks | Smoothly varying random noise, Kalman filter updates for many runs at once                                    | `noise.py`, `kalman.py` |
+| CUDA kernels    | Hand-written GPU code that runs one entire simulation inside a single GPU thread                              | `kernels.py`            |
+| Examples        | A simple test case, the tracking filter benchmark, and the OSSE                                               | `examples/`             |
+
 
 Adding a new simulation takes four functions: the random settings for each run, the starting state, one time step, and the final score. The engine handles the rest.
 
@@ -29,9 +31,9 @@ Adding a new simulation takes four functions: the random settings for each run, 
 
 **The OSSE (the original motivation).** Each run simulates 4 days of a satellite's orbit at 30-second steps (11,520 steps): the atmosphere through a storm, three sensors with random calibration errors and drift, and a 6-state extended Kalman filter fusing them. Ported to simt and checked to give the same results as the original, within the original's own statistical uncertainty. 100,000 runs now take about 2 minutes instead of an estimated 100 hours. Design questions became sweeps instead of overnight jobs: testing 10 gauge accuracy levels with and without one of the sensors (200,000 runs) took about 6 minutes.
 
-**Tracking filter (the benchmark).** The OSSE is specific to one project, so the GPU work is also measured on a textbook problem anyone can rebuild: a Kalman filter tracking an object's position and velocity from noisy measurements, the same kind of small filter at the core of the OSSE. Run 100,000 times, moving it from CPU to GPU with PyTorch made it 17x faster. A custom CUDA kernel, where each GPU thread runs one whole simulation, made it another ~22x faster on top of that.
+**Tracking filter (the benchmark).** The OSSE is specific to one project, so the GPU work is also measured on a textbook problem anyone can rebuild: a Kalman filter tracking an object's position and velocity from noisy measurements. Run 100,000 times, moving it from CPU to GPU with PyTorch made it 17x faster. A custom CUDA kernel, where each GPU thread runs one whole simulation, made it another ~22x faster on top of that.
 
-GPU numbers are from a free Google Colab Tesla T4. Raw data is in [`data/`](data/).
+GPU numbers are from a free Google Colab Tesla T4. Raw data from multiple tests is in `[data/](data/)`.
 
 ## Lessons and open questions
 
@@ -40,4 +42,4 @@ GPU numbers are from a free Google Colab Tesla T4. Raw data is in [`data/`](data
 - Setting up random number generators for a million GPU threads took longer than the simulation itself. They're now set up once and reused.
 - The kernel still needs to be compared against tools like `torch.compile` and JAX.
 - All numbers come from one GPU (a T4). Other hardware is still untested.
-- simt makes the OSSE faster, not more realistic. It carries all of the original simulation's assumptions.
+
