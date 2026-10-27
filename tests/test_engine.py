@@ -1,5 +1,5 @@
 import torch
-from engine import run
+from simt import run
 from examples.particle import Particle
 
 SC = Particle(dt=0.5, v_mean=2.0, v_std=0.3, x0_std=1.0)

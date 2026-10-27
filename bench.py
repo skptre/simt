@@ -1,7 +1,7 @@
 import time
 import torch
-from noise import ar1
-from engine import run
+from simt import ar1
+from simt import run
 from examples.particle import Particle
 import csv 
 import sys
@@ -60,7 +60,7 @@ def time_fn(fn, device, repeats=5):
     return times[len(times) // 2]
 
 def particle_kernel_full(n_runs, n_steps, dt):
-    from kernels import run_particle_kernel
+    from simt.kernels import run_particle_kernel
     g = torch.Generator(device="cuda").manual_seed(0)
     x0 = 0.5 * torch.randn(n_runs, generator=g, device="cuda")
     v = 1.0 + 0.1 * torch.randn(n_runs, generator=g, device="cuda")
@@ -68,7 +68,7 @@ def particle_kernel_full(n_runs, n_steps, dt):
     return {"v": v.cpu(), "x0": x0.cpu(), "final_x": out.cpu()}
 
 def bench_kf_kernel(n_steps=100):
-    from kernels import run_kf_kernel
+    from simt.kernels import run_kf_kernel
     rows = []
 
     for dims in [1, 2, 3]:

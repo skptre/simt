@@ -1,5 +1,5 @@
 import torch
-from engine import Scenario
+from simt import Scenario
 
 
 class Particle(Scenario):

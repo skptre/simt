@@ -4,8 +4,8 @@ import os
 import numpy as np
 import torch
 
-from engine import Scenario
-from kalman import kf_update_scalar
+from simt import Scenario
+from simt import kf_update_scalar
 
 AMU = 1.66053906660e-27
 MU = 3.986004418e14

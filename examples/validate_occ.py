@@ -6,7 +6,7 @@ import time
 
 import torch
 
-from engine import run
+from simt import run
 from examples.occ import OCC
 
 REFERENCE = {

@@ -1,6 +1,6 @@
 import torch
 import math
-from noise import ar1
+from simt import ar1
 
 def make(seed=0, device="cpu", dtype=torch.float64):
     g = torch.Generator(device=device).manual_seed(seed)

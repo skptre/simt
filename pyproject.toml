@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simt"
+version = "0.1.0"
+description = "Batched Monte Carlo simulation on CPU and GPU"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["numpy", "torch"]
+
+[project.optional-dependencies]
+cuda = ["numba-cuda"]
+examples = ["pymsis", "matplotlib"]
+dev = ["pytest"]
+
+[tool.setuptools]
+packages = ["simt"]

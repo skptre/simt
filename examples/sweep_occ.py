@@ -8,7 +8,7 @@ import torch
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from engine import run
+from simt import run
 from examples.occ import OCC
 
 GAUGE_ERRORS = (0.02, 0.05, 0.08, 0.12, 0.16, 0.20, 0.25, 0.30, 0.35, 0.40)
