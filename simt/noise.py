@@ -19,3 +19,12 @@ def ar1(n_runs, n_steps, sigma, tau_s, dt, generator, device, dtype):
     for k in range(1, n_steps):
         x[k] = a * x[k-1] + kicks[k]
     return x
+
+def ar1_step(x, sigma, tau_s, dt, generator):
+    # x: current noise value for every run, any shape (e.g. [N] or [N, 7])
+    # returns the next value: a * x + kick, same AR(1) rule as ar1()
+
+    a = math.exp(-dt/tau_s)
+    kick = sigma * math.sqrt(1 - a * a)
+    z = torch.randn(x.shape, generator=generator, device=x.device, dtype=x.dtype)
+    return a * x + kick * z

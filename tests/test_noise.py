@@ -23,3 +23,15 @@ def test_memory_after_tau():
     lag = 20
     corr = (x[:-lag] * x[lag:]).mean() / x.var()
     assert abs(corr.item() - math.exp(-1)) < 0.02
+
+def test_ar1_step_matches_spread_and_memory():
+    from simt.noise import ar1_step
+    g = torch.Generator().manual_seed(0)
+    sigma, tau, dt = 2.0, 600.0, 30.0
+    x = sigma * torch.randn(50_000, generator=g, dtype=torch.float64)   # start at the right spread
+    start = x.clone()
+    for _ in range(20):                                                 # 20 steps = 600 s = one tau
+        x = ar1_step(x, sigma, tau, dt, g)
+    assert abs(x.std().item() - sigma) / sigma < 0.02                   # spread stays sigma
+    corr = (start * x).mean().item() / sigma ** 2
+    assert abs(corr - math.exp(-1)) < 0.02                              # memory: 37% after one tau
