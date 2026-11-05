@@ -23,3 +23,6 @@ class Particle(Scenario):
 
     def score(self, state, params):
         return {"final_x": state}
+
+    def observe(self, state, k, params):
+        return {"x": state}

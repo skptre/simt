@@ -121,4 +121,17 @@ def test_paired_ci_is_tight_when_runs_are_paired():
     assert lo < 0.5 < hi and abs(est - 0.5) < 0.01
     assert hi - lo < 0.01                                                
     lo_a, hi_a = bootstrap_ci(a, n_boot=500)
-    assert (hi - lo) < (hi_a - lo_a) / 5                                 
+    assert (hi - lo) < (hi_a - lo_a) / 5  
+
+def test_recording_first_runs_every_kth_step(tmp_path):
+    results, _ = run(Particle(dt=0.5), n_runs=50, n_steps=10, dtype=torch.float64,
+                     record_runs=3, record_every=2)
+    s = results.series
+    assert s["step"].tolist() == [0, 2, 4, 6, 8]
+    assert s["x"].shape == (5, 3)                                       # 5 recorded steps x 3 runs
+    for row, k in enumerate(s["step"].tolist()):
+        expected = results["x0"][:3] + results["v"][:3] * 0.5 * (k + 1)  # position after step k
+        assert torch.allclose(s["x"][row], expected)
+    save_results(results, str(tmp_path / "r.npz"))
+    loaded, _ = load_results(str(tmp_path / "r.npz"))
+    assert torch.equal(loaded.series["x"], s["x"])                                        

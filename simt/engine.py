@@ -22,13 +22,18 @@ class Scenario:
         # After the last step: per-run outcome metrics, e.g. final error, success flag.
         # Returns dict {name: tensor [N]}.
         raise NotImplementedError
+    
+    def observe(self, state, k, params):
+        # optional, values to record at step k
+        return {}
 
 
 class Results(dict):
-    def __init__(self, data, param_names, metric_names):
+    def __init__(self, data, param_names, metric_names, series=None):
         super().__init__(data)
         self.param_names = list(param_names)
         self.metric_names = list(metric_names)
+        self.series = series or {}
 
     def params(self):
         return {k: self[k] for k in self.param_names}
@@ -38,7 +43,7 @@ class Results(dict):
 
 
 def run(scenario, n_runs, n_steps=None, seed=0, device="cpu", dtype=torch.float32, chunk_size=100_000,
-        progress=False):
+        progress=False, record_runs=0, record_every=1):
     if n_steps is None:
         n_steps = getattr(scenario, "n_steps", None)
         if n_steps is None:
@@ -49,6 +54,7 @@ def run(scenario, n_runs, n_steps=None, seed=0, device="cpu", dtype=torch.float3
     report_every = max(1, n_steps // 10)
 
     chunks = []
+    series, record_steps = {}, []
     param_names, metric_names = [], []
     start = time.perf_counter()
 
@@ -60,6 +66,11 @@ def run(scenario, n_runs, n_steps=None, seed=0, device="cpu", dtype=torch.float3
 
         for k in range(n_steps):
             state = scenario.step(state, k, params, generator)
+            if c == 0 and record_runs > 0 and k % record_every == 0:
+                for name, v in scenario.observe(state, k, params).items():
+                    series.setdefault(name, []).append(v[:record_runs].clone())
+                record_steps.append(k)
+
             if progress and (k + 1) % report_every == 0:
                 done = (c * n_steps + k + 1) / (n_chunks * n_steps)
                 spent = time.perf_counter() - start
@@ -72,4 +83,7 @@ def run(scenario, n_runs, n_steps=None, seed=0, device="cpu", dtype=torch.float3
     elapsed = time.perf_counter() - start
 
     data = {name: torch.cat([chunk[name] for chunk in chunks]) for name in chunks[0]}
-    return Results(data, param_names, metric_names), elapsed
+    recorded = {name: torch.stack(vals).cpu() for name, vals in series.items()}
+    if record_steps:
+        recorded["step"] = torch.tensor(record_steps)
+    return Results(data, param_names, metric_names, recorded), elapsed
