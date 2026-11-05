@@ -2,7 +2,7 @@ import csv
 import itertools
 import os
 import time
-
+import json
 import torch
 
 from simt.engine import run
@@ -27,18 +27,28 @@ def write_csv(rows, path):
         writer.writeheader()
         writer.writerows(rows)
 
+def read_csv(path):
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
 
 def sweep(make_scenario, configs, n_runs, n_steps=None, seed=0, device="cpu", dtype=torch.float32,
-          chunk_size=100_000, percentiles=(10, 50, 90), csv_path=None, save_dir=None):
-    rows = []
+          chunk_size=100_000, percentiles=(10, 50, 90), csv_path=None, save_dir=None, resume=False):
+    rows, done = [], set()
+    if resume and csv_path and os.path.exists(csv_path):
+        rows = read_csv(csv_path)
+        done = {(r["config"], r["n_runs"]) for r in rows}  # keep finished rows
     start = time.perf_counter()
 
     for i, cfg in enumerate(configs):
+        tag = json.dumps(cfg, sort_keys=True, default=str)
+        if (tag, str(n_runs)) in done:
+            print(f"[{i + 1}/{len(configs)}] {cfg} already done, skipping...", flush=True)
+            continue
         scenario = make_scenario(**cfg)
         results, seconds = run(scenario, n_runs, n_steps, seed=seed, device=device, dtype=dtype,
                                chunk_size=chunk_size)
 
-        row = {**cfg, "n_runs": n_runs, "seconds": seconds}
+        row = {"config": tag, **cfg, "n_runs": n_runs, "seconds": seconds}
         for name in results.metric_names:
             for stat, value in summarize(results[name], percentiles).items():
                 row[f"{name}_{stat}"] = value

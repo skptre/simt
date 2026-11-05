@@ -89,3 +89,21 @@ def test_sweep_summaries_and_outputs(tmp_path):
     loaded, meta = load_results(str(tmp_path / "runs" / "config_001.npz"))
     assert meta == {"v_mean": 2.0}
     assert loaded["final_x"].shape == (2000,)
+
+def test_sweep_resume_skips_finished_configs(tmp_path):
+    csv_path = str(tmp_path / "s.csv")
+    calls = []
+
+    def make(v_mean):
+        calls.append(v_mean) # record which configs actually ran
+        return Particle(dt=1.0, v_mean=v_mean, v_std=0.01, x0_std=0.01)
+
+    sweep(make, grid(v_mean=[1.0, 2.0]), n_runs=100, n_steps=5, csv_path=csv_path)
+    calls.clear()
+    rows = sweep(make, grid(v_mean=[1.0, 2.0, 3.0]), n_runs=100, n_steps=5,
+                 csv_path=csv_path, resume=True)
+    assert calls == [3.0] # only the new config ran
+    assert len(rows) == 3 # old 2 + new 1 in the CSV
+    calls.clear()
+    sweep(make, grid(v_mean=[1.0]), n_runs=200, n_steps=5, csv_path=csv_path, resume=True)
+    assert calls == [1.0] # different n_runs -> not "done"
