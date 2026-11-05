@@ -60,7 +60,7 @@ def paired_bootstrap_ci(a, b, q=50, n_boot=1000, level=0.95, seed=0):
         k = min(batch, n_boot - first)
         idx = torch.randint(0, n, (k, n), generator=g)
         diffs.append(percentile(b[idx], q, dim=1) - percentile(a[idx], q, dim=1))
-        diffs = torch.cat(diffs)
-        tail = (1 - level) / 2 * 100
-        return estimate, percentile(diffs, tail).item(), percentile(diffs, 100 - tail).item()
+    diffs = torch.cat(diffs)
+    tail = (1 - level) / 2 * 100
+    return estimate, percentile(diffs, tail).item(), percentile(diffs, 100 - tail).item()
 
