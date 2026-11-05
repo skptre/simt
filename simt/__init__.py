@@ -4,7 +4,7 @@ from simt.kalman import kf_predict, kf_update, kf_update_scalar
 from simt.metrics import RunningStats
 from simt.noise import ar1, ar1_step
 from simt.window import RollingMean
-from simt.stats import bootstrap_ci, percentile, summarize
-from simt.sweep import grid, sweep
+from simt.stats import bootstrap_ci, paired_bootstrap_ci, percentile, summarize
+from simt.sweep import grid, one_at_a_time, sweep
 
 __version__ = "0.1.0"

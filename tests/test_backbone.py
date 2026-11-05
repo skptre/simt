@@ -5,7 +5,7 @@ import torch
 
 from examples.particle import Particle
 from simt import (RunningStats, bootstrap_ci, grid, load_results, percentile, run, save_results,
-                  summarize, sweep)
+                  summarize, sweep, one_at_a_time, paired_bootstrap_ci)
 
 
 def test_running_stats_known_values():
@@ -107,3 +107,18 @@ def test_sweep_resume_skips_finished_configs(tmp_path):
     calls.clear()
     sweep(make, grid(v_mean=[1.0]), n_runs=200, n_steps=5, csv_path=csv_path, resume=True)
     assert calls == [1.0] # different n_runs -> not "done"
+
+def test_one_at_a_time_varies_one_setting():
+    configs = one_at_a_time({"a": 1, "b": 2}, a=[0, 1, 2], b=[2, 3])
+    assert configs == [{"a": 1, "b": 2}, {"a": 0, "b": 2}, {"a": 2, "b": 2}, {"a": 1, "b": 3}]
+
+
+def test_paired_ci_is_tight_when_runs_are_paired():
+    g = torch.Generator().manual_seed(0)
+    a = torch.randn(20_000, generator=g, dtype=torch.float64)           
+    b = a + 0.5 + 0.01 * torch.randn(20_000, generator=g, dtype=torch.float64)   
+    est, lo, hi = paired_bootstrap_ci(a, b, n_boot=500)
+    assert lo < 0.5 < hi and abs(est - 0.5) < 0.01
+    assert hi - lo < 0.01                                                
+    lo_a, hi_a = bootstrap_ci(a, n_boot=500)
+    assert (hi - lo) < (hi_a - lo_a) / 5                                 

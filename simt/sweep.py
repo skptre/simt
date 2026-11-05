@@ -64,3 +64,16 @@ def sweep(make_scenario, configs, n_runs, n_steps=None, seed=0, device="cpu", dt
         print(f"[{i + 1}/{len(configs)}] {cfg}  {seconds:.1f} s  (~{left / 60:.1f} min left)", flush=True)
 
     return rows
+
+def one_at_a_time(base, **variations):
+    # base: the baseline config 
+    # variation: settings (list of values to try)
+    configs = [dict(base)]
+    for name, values in variations.items():
+        for v in values:
+            if v == base.get(name):
+                continue
+            cfg = dict(base)
+            cfg[name] = v
+            configs.append(cfg)
+    return configs

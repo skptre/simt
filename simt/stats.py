@@ -41,3 +41,26 @@ def bootstrap_ci(x, q=50, n_boot=1000, level=0.95, seed=0):
     stats = torch.cat(stats)
     tail = (1 - level) / 2 * 100
     return percentile(stats, tail).item(), percentile(stats, 100 - tail).item()
+
+def paired_bootstrap_ci(a, b, q=50, n_boot=1000, level=0.95, seed=0):
+    # a, b: same length results from two config runs with the same seed (run i in a pairs with run i in b)
+    # returns (estimate, lo, hi) for percentile_q(b) - percentile_q(a)
+    a = a.flatten().double()
+    b = b.flatten().double()
+    keep = ~(torch.isnan(a) | torch.isnan(b)) # drop a pair if either side is missing
+    a, b = a[keep], b[keep]
+    n = a.numel()
+    if n == 0:
+        return float("nan"), float("nan"), float("nan")
+    estimate = percentile(b, q) - percentile(a, q).item()
+    g = torch.Generator().manual_seed(seed)
+    batch = max(1, min(100, 20_000_000 // n))
+    diffs = []
+    for first in range(0, n_boot, batch):
+        k = min(batch, n_boot - first)
+        idx = torch.randint(0, n, (k, n), generator=g)
+        diffs.append(percentile(b[idx], q, dim=1) - percentile(a[idx], q, dim=1))
+        diffs = torch.cat(diffs)
+        tail = (1 - level) / 2 * 100
+        return estimate, percentile(diffs, tail).item(), percentile(diffs, 100 - tail).item()
+
